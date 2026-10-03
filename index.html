@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>颐声通 - 老年居家智能助手</title>
+    <style>
+        /* ===== 全局样式：为老年人优化 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            background-color: #f5f5f0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ===== 顶部状态栏 ===== */
+        .header {
+            background-color: #2c5f2d;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .status-indicator {
+            font-size: 20px;
+            margin-top: 8px;
+            opacity: 0.9;
+        }
+
+        /* ===== 对话区域 ===== */
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 20px 24px;
+            border-radius: 20px;
+            font-size: 26px;
+            line-height: 1.6;
+        }
+
+        /* 系统/助手消息 - 左边 */
+        .message.assistant {
+            background-color: white;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* 用户消息 - 右边 */
+        .message.user {
+            background-color: #4a90d9;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        /* ===== 底部控制区 ===== */
+        .controls {
+            flex-shrink: 0;
+            padding: 30px 20px;
+            background-color: white;
+            box-shadow: 0 -4px 16px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* 核心说话按钮 - 超大 */
+        .speak-button {
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background-color: #2c5f2d;
+            color: white;
+            border: none;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(44, 95, 45, 0.4);
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .speak-button:hover {
+            transform: scale(1.05);
+        }
+
+        .speak-button:active {
+            transform: scale(0.95);
+        }
+
+        .speak-button.listening {
+            background-color: #e74c3c;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.6); }
+            70% { box-shadow: 0 0 0 30px rgba(231, 76, 60, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+        }
+
+        .speak-button .icon {
+            font-size: 48px;
+        }
+
+        /* 功能快捷按钮 */
+        .quick-actions {
+            display: flex;
+            gap: 20px;
+        }
+
+        .quick-btn {
+            padding: 20px 36px;
+            font-size: 26px;
+            border: 2px solid #2c5f2d;
+            background-color: white;
+            color: #2c5f2d;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-btn:hover {
+            background-color: #e8f5e9;
+        }
+
+        .quick-btn.active {
+            background-color: #2c5f2d;
+            color: white;
+        }
+
+        /* ===== 告警弹窗 ===== */
+        .alert-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(231, 76, 60, 0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 1000;
+        }
+
+        .alert-modal.show {
+            display: flex;
+        }
+
+        .alert-modal .alert-icon {
+            font-size: 100px;
+            margin-bottom: 30px;
+        }
+
+        .alert-modal .alert-text {
+            font-size: 40px;
+            font-weight: bold;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .alert-modal .alert-btn {
+            margin-top: 50px;
+            padding: 20px 60px;
+            font-size: 28px;
+            background-color: white;
+            color: #e74c3c;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* ===== 语速调节（隐藏在右上角，子女用） ===== */
+        .settings {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 16px;
+            opacity: 0.6;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部标题 -->
+    <div class="header">
+        <h1>颐声通</h1>
+        <div class="status-indicator" id="statusText">● 在线，点下方大按钮说话</div>
+        <div class="settings" onclick="toggleSettings()">⚙</div>
+    </div>
+
+    <!-- 对话区域 -->
+    <div class="chat-container" id="chatContainer">
+        <div class="message assistant">
+            您好！我是您的智能助手小颐。<br><br>
+            您可以直接问我：<br>
+            · "今天天气怎么样"<br>
+            · "怎么查社保"<br>
+            · "提醒我八点吃降压药"<br><br>
+            按住下方大按钮说话就行。
+        </div>
+    </div>
+
+    <!-- 底部控制区 -->
+    <div class="controls">
+        <div class="quick-actions">
+            <button class="quick-btn" onclick="quickAsk('今天天气怎么样')">查天气</button>
+            <button class="quick-btn" onclick="quickAsk('我要查社保')">查社保</button>
+            <button class="quick-btn" onclick="quickAsk('帮我定个用药提醒')">用药提醒</button>
+            <button class="quick-btn" onclick="quickAsk('帮我打电话给儿子')">打电话给儿子</button>
+        </div>
+
+        <button class="speak-button" id="speakBtn" onclick="toggleListen()">
+            <span class="icon">🎤</span>
+            <span id="btnText">按住说话</span>
+        </button>
+        <br>
+        <button class="quick-btn" style="background-color:#e74c3c;color:white;border-color:#e74c3c;padding:18px 50px;font-size:24px;" 
+                onclick="showAlert()">
+                 🆘 紧急求助
+        </button>
+    </div>
+
+    <!-- 风险告警弹窗 -->
+    <div class="alert-modal" id="alertModal">
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-text">
+            检测到异常呼救！<br>
+            需要立即联系家人吗？
+        </div>
+        <button class="alert-btn" onclick="dismissAlert()">我没事</button>
+    </div>
+
+    <script>
+        // ============================================
+        //  核心功能：语音识别 + 大模型对话 + 语音播报
+        // ============================================
+
+        // ====== 配置区：这里填后端接口地址 ======
+        const API_BASE_URL = 'http://localhost:8000'; // 改成你的后端地址
+        // ========================================
+
+        const chatContainer = document.getElementById('chatContainer');
+        const speakBtn = document.getElementById('speakBtn');
+        const btnText = document.getElementById('btnText');
+        const statusText = document.getElementById('statusText');
+
+        let isListening = false;
+        let recognition = null;
+        let currentUtterance = null;
+
+        // ====== 1. 初始化语音识别（浏览器原生API） ======
+        function initSpeechRecognition() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert('您的浏览器不支持语音识别，请使用 Chrome 或 Edge 浏览器');
+                return null;
+            }
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+
+            recognition.lang = 'zh-CN';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            // 识别结束
+            recognition.onresult = async (event) => {
+                const transcript = event.results[0][0].transcript;
+                console.log('识别结果:', transcript);
+
+                // 显示用户消息
+                addMessage(transcript, 'user');
+
+                // 发送到后端处理
+                await sendToAI(transcript);
+            };
+
+            recognition.onerror = (event) => {
+                console.error('语音识别错误:', event.error);
+                statusText.textContent = '● 没听清，请再试一次';
+                resetButton();
+            };
+
+            recognition.onend = () => {
+                resetButton();
+            };
+
+            return recognition;
+        }
+
+        // ====== 2. 说话按钮逻辑 ======
+        function toggleListen() {
+            if (isListening) {
+                recognition.stop();
+            } else {
+                if (!recognition) {
+                    recognition = initSpeechRecognition();
+                    if (!recognition) return;
+                }
+                recognition.start();
+                isListening = true;
+                speakBtn.classList.add('listening');
+                btnText.textContent = '松开结束';
+                statusText.textContent = '● 正在听...';
+            }
+        }
+
+        function resetButton() {
+            isListening = false;
+            speakBtn.classList.remove('listening');
+            btnText.textContent = '按住说话';
+            if (statusText.textContent.includes('正在听')) {
+                statusText.textContent = '● 在线，点下方大按钮说话';
+            }
+        }
+
+        // ====== 3. 发送消息到后端，获取AI回复 ======
+        async function sendToAI(userText) {
+            statusText.textContent = '● 正在思考...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: userText,
+                        user_id: 'elderly_001' // 模拟用户ID
+                    })
+                });
+
+                const data = await response.json();
+                const aiReply = data.reply || '抱歉，我没听懂，请再说一遍';
+
+                addMessage(aiReply, 'assistant');
+                speakText(aiReply);
+
+                // 检测是否需要触发风险告警
+                if (data.risk_alert) {
+                    showAlert(aiReply);
+                }
+
+                statusText.textContent = '● 在线，点下方大按钮说话';
+
+            } catch (error) {
+                console.error('请求失败:', error);
+                // 后端连不上时，用本地模拟回复（方便前端单独测试）
+                const mockReply = getMockReply(userText);
+                addMessage(mockReply, 'assistant');
+                speakText(mockReply);
+                statusText.textContent = '● 离线模式（本地模拟回复）';
+            }
+        }
+
+        // ====== 4. 语音播报（文字转语音） ======
+        function speakText(text) {
+            // 停止之前的播报
+            if (window.speechSynthesis.speaking) {
+                window.speechSynthesis.cancel();
+            }
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'zh-CN';
+            utterance.rate = 0.9; // 稍慢，适合老人
+            utterance.pitch = 1;
+
+            // 找中文女声
+            const voices = window.speechSynthesis.getVoices();
+            const zhVoice = voices.find(v => v.lang.includes('zh') && v.name.includes('Female'));
+            if (zhVoice) utterance.voice = zhVoice;
+
+            window.speechSynthesis.speak(utterance);
+            currentUtterance = utterance;
+        }
+
+        // ====== 5. 添加消息到对话区 ======
+        function addMessage(text, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = text;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // ====== 6. 快捷按钮 ======
+        function quickAsk(question) {
+            addMessage(question, 'user');
+    
+                // 用药提醒特殊处理
+            if (question.includes('用药提醒') || question.includes('吃药')) {
+                setTimeout(() => {
+                addMessage('好的，我帮您记下来。\n\n您刚才说的是：\n· 降压药\n· 每天早上8点\n\n对吗？', 'assistant');
+                speakText('好的，我帮您记下来。您刚才说的是，降压药，每天早上8点，对吗？');
+                }, 500);
+             return;
+            }
+    
+            sendToAI(question);
+        }
+
+
+        // ====== 7. 风险告警弹窗 ======
+        function showAlert(text) {
+            document.getElementById('alertModal').classList.add('show');
+            // 自动语音告警
+            speakText('检测到异常，请问您需要帮助吗？');
+        }
+
+        function dismissAlert() {
+            document.getElementById('alertModal').classList.remove('show');
+        }
+
+        // ====== 8. 设置面板（子女用） ======
+        function toggleSettings() {
+            const choice = prompt('请选择要设置的项目：\n1. 调语速\n2. 调字体大小\n请输入数字：', '1');
+                if (choice === '1') {
+            const rate = prompt('请输入播报语速（0.5-1.5，数字越小越慢）：', '0.9');
+                if (rate) alert(`语速已设置为 ${rate}`);
+                } else if (choice === '2') {
+                const size = prompt('请输入字体大小（px，建议28-40）：', '32');
+                if (size) {
+                    document.querySelectorAll('.message').forEach(el => {
+                    el.style.fontSize = size + 'px';
+                });
+            alert('字体大小已调整');
+        }
+    }
+        }
+
+
+        // ====== 本地模拟回复（后端没接好时用） ======
+        function getMockReply(text) {
+            if (text.includes('社保') || text.includes('查社保')) {
+                return '您好，社保查询可以通过"掌上12333"APP，或者拨打12333热线电话。您具体想查什么呢？';
+            } else if (text.includes('天气')) {
+                return '今天南宁晴天，气温22到30度，适合出门散步，记得带帽子防晒。';
+            } else if (text.includes('药') || text.includes('提醒')) {
+                return '好的，请问您想几点吃什么药？您说一遍，我帮您记下来。';
+            } else if (text.includes('你好') || text.includes('在吗')) {
+                return '您好，我在呢！有什么可以帮您的？';
+            } else if (text.includes('救命') || text.includes('有人吗') || text.includes('救我')) {
+                return '您还好吗？需要我帮您联系家人吗？';
+            } else {
+                return '好的，我明白了。还有什么需要我帮忙的吗？';
+            }
+        }
+
+        // 加载语音列表（有些浏览器需要等一下）
+        window.speechSynthesis.onvoiceschanged = () => {
+            window.speechSynthesis.getVoices();
+        };
+    </script>
+</body>
+</html>
+<!-- （注：内容由AI生成） -->
