@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>颐声通 - 老年居家智能助手</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            background-color: #e8f5e9;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 480px;
+            height: 100vh;
+            height: 100dvh;
+            background-color: #f5f9f5;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 24px rgba(0, 0, 0, 0.12);
+        }
+
+        /* ===== 顶部状态栏 ===== */
+        .top-bar {
+            background: linear-gradient(135deg, #d4edda, #c8e6c9);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .top-left {
+            font-size: 17px;
+            color: #2c5f2d;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .top-right {
+            font-size: 17px;
+            color: #2c5f2d;
+            font-weight: bold;
+        }
+
+        /* ===== 问候区 ===== */
+        .greeting-section {
+            background-color: white;
+            padding: 12px 20px 10px;
+            flex-shrink: 0;
+        }
+
+        .greeting-subtitle {
+            font-size: 16px;
+            color: #2c5f2d;
+            text-align: center;
+            margin-bottom: 2px;
+        }
+
+        .greeting-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #222;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .greeting-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: 
+                radial-gradient(circle at center, 
+                    #e0d0c0 0%, 
+                    #e0d0c0 38%,
+                    #a5d6a7 39%,
+                    #a5d6a7 45%,
+                    #81c784 46%,
+                    #81c784 52%,
+                    #66bb6a 53%,
+                    #66bb6a 59%,
+                    #4caf50 60%,
+                    #4caf50 66%,
+                    #2e7d32 67%,
+                    #1b5e20 100%
+                );
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #5d4037;
+            font-size: 22px;
+            font-weight: bold;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .avatar::before {
+            content: '';
+            position: absolute;
+            top: 18%;
+            left: 28%;
+            width: 16%;
+            height: 16%;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .greeting-text {
+            flex: 1;
+            font-size: 15px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .speaker-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #e8f5e9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .banner {
+            background-color: #fff8e1;
+            margin-top: 8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .banner-text {
+            flex: 1;
+            font-size: 14px;
+            color: #f57f17;
+        }
+
+        .banner .speaker-icon {
+            width: 28px;
+            height: 28px;
+            background-color: #ffe082;
+            font-size: 14px;
+        }
+
+        /* ===== 功能区抽屉按钮 ===== */
+        .feature-toggle {
+            margin: 6px 12px 0;
+            padding: 6px;
+            text-align: center;
+            font-size: 14px;
+            color: #2c5f2d;
+            background-color: #e8f5e9;
+            border: 2px solid #2c5f2d;
+            border-radius: 16px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .feature-panel.collapsed .stats-row,
+        .feature-panel.collapsed .feature-grid {
+            display: none;
+        }
+
+        /* ===== 统计卡 ===== */
+        .stats-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            padding: 8px 12px 0;
+            flex-shrink: 0;
+        }
+
+        .stat-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 10px 12px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #888;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #2c5f2d;
+        }
+
+        .stat-sub {
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* ===== 功能卡 ===== */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            padding: 8px 12px;
+            flex-shrink: 0;
+        }
+
+        .feature-card {
+            border-radius: 10px;
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+
+        .feature-card:active {
+            transform: scale(0.97);
+        }
+
+        .feature-card.blue { background-color: #e3f2fd; }
+        .feature-card.orange { background-color: #fff3e0; }
+        .feature-card.green { background-color: #e8f5e9; }
+        .feature-card.pink { background-color: #ffebee; }
+
+        .feature-icon {
+            font-size: 22px;
+            margin-bottom: 2px;
+        }
+
+        .feature-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #222;
+        }
+
+        .feature-desc {
+            font-size: 11px;
+            color: #888;
+        }
+
+        /* ===== 聊天区（单独滚动） ===== */
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-height: 0;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 7px 10px;
+            border-radius: 10px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .message.assistant {
+            background-color: white;
+            align-self: flex-start;
+        }
+
+        .message.user {
+            background-color: #4a90d9;
+            color: white;
+            align-self: flex-end;
+        }
+
+        /* ===== 底部控制区 ===== */
+        .bottom-controls {
+            flex-shrink: 0;
+            background-color: white;
+            padding: 10px 16px 12px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .speak-button {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #4caf50, #2c5f2d);
+            color: white;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(44, 95, 45, 0.35);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+        }
+
+        .speak-button.listening {
+            background: linear-gradient(145deg, #ef5350, #c62828);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 83, 80, 0.5); }
+            70% { box-shadow: 0 0 0 20px rgba(239, 83, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 83, 80, 0); }
+        }
+
+        .speak-button .icon {
+            font-size: 22px;
+        }
+
+        .speak-hint {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .bottom-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .font-adjust {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .font-size-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .font-size-btn.active {
+            color: #2c5f2d;
+            font-weight: bold;
+        }
+
+        .font-a1 { font-size: 13px; }
+        .font-a2 { font-size: 16px; }
+        .font-a3 { font-size: 22px; }
+
+        .settings-icon {
+            font-size: 20px;
+            color: #999;
+            cursor: pointer;
+        }
+
+        .alert-modal {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(231, 76, 60, 0.96);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 1000;
+            text-align: center;
+            padding: 24px;
+        }
+
+        .alert-modal.show { display: flex; }
+        .alert-modal .alert-icon { font-size: 80px; margin-bottom: 20px; }
+        .alert-modal .alert-text { font-size: 28px; font-weight: bold; line-height: 1.5; }
+        .alert-modal .alert-btn {
+            margin-top: 30px;
+            padding: 14px 48px;
+            font-size: 24px;
+            background-color: white;
+            color: #e74c3c;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="top-bar">
+            <div class="top-left">
+                <span>📍</span>
+                <span id="cityText">南宁市 · 22°C</span>
+            </div>
+            <div class="top-right" id="timeText">00:00</div>
+        </div>
+
+        <div class="greeting-section">
+            <div class="greeting-subtitle">祝您健康快乐，李奶奶</div>
+            <div class="greeting-title">早上好！</div>
+            <div class="greeting-row">
+                <div class="avatar">医</div>
+                <div class="greeting-text">
+                    今天天气不错，适合出门散散步。<br>记得按时吃药哦！
+                </div>
+                <div class="speaker-icon" onclick="playReport()">🔊</div>
+            </div>
+            <div class="banner">
+                <div class="banner-text">🎂 祝您健康快乐，平安顺遂，幸福常伴。</div>
+                <div class="speaker-icon" onclick="speakText('祝您健康快乐，平安顺遂，幸福常伴。')">🔊</div>
+            </div>
+        </div>
+
+        <!-- 功能区：可收起 -->
+        <div class="feature-panel" id="featurePanel">
+            <div class="feature-toggle" onclick="toggleFeatures()">
+                <span id="featureToggleText">▼ 收起功能区</span>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-label">今日用药</div>
+                    <div class="stat-value" id="medCount">2次</div>
+                    <div class="stat-sub" id="medDone">已完成1次</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">身体状况</div>
+                    <div class="stat-value" id="bodyStatus">良好</div>
+                    <div class="stat-sub">继续保持</div>
+                </div>
+            </div>
+
+            <div class="feature-grid">
+                <div class="feature-card blue" onclick="quickAsk('今日播报')">
+                    <div class="feature-icon">📢</div>
+                    <div class="feature-title">今日播报</div>
+                    <div class="feature-desc">天气与健康建议</div>
+                </div>
+                <div class="feature-card orange" onclick="quickAsk('用药提醒')">
+                    <div class="feature-icon">💊</div>
+                    <div class="feature-title">用药提醒</div>
+                    <div class="feature-desc" id="nextMed">下次 20:00</div>
+                </div>
+                <div class="feature-card green" onclick="quickAsk('我想咨询健康问题')">
+                    <div class="feature-icon">🩺</div>
+                    <div class="feature-title">健康咨询</div>
+                    <div class="feature-desc">说出您的问题</div>
+                </div>
+                <div class="feature-card pink" onclick="triggerEmergency()">
+                    <div class="feature-icon">SOS</div>
+                    <div class="feature-title">紧急求助</div>
+                    <div class="feature-desc">家人就在身边</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-container" id="chatContainer">
+            <div class="message assistant">您好！我是小颐，点下方大按钮说话就行。</div>
+        </div>
+
+        <div class="bottom-controls">
+            <button class="speak-button" id="speakBtn"
+                onmousedown="startListen()"
+                onmouseup="stopListen()"
+                onmouseleave="stopListen()"
+                ontouchstart="event.preventDefault();startListen()"
+                ontouchend="event.preventDefault();stopListen()">
+                <span class="icon">🎤</span>
+                <span id="btnText">按住说话</span>
+            </button>
+            <div class="speak-hint">按住说话，松开发送</div>
+            <div class="bottom-row">
+                <div class="font-adjust">
+                    <button class="font-size-btn font-a1" onclick="setFontSize(16)">A</button>
+                    <button class="font-size-btn font-a2 active" onclick="setFontSize(20)">A</button>
+                    <button class="font-size-btn font-a3" onclick="setFontSize(26)">A</button>
+                    <span style="font-size:12px;color:#999;margin-left:4px;">调节字体</span>
+                </div>
+                <div class="settings-icon" onclick="toggleSettings()">⚙</div>
+            </div>
+        </div>
+
+        <div class="alert-modal" id="alertModal">
+            <div class="alert-icon">⚠️</div>
+            <div class="alert-text" id="alertText">
+                检测到异常呼救！<br>需要立即联系家人吗？
+            </div>
+            <button class="alert-btn" onclick="dismissAlert()">我没事</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000';
+
+        const chatContainer = document.getElementById('chatContainer');
+        const speakBtn = document.getElementById('speakBtn');
+        const btnText = document.getElementById('btnText');
+
+        let isListening = false;
+        let recognition = null;
+        let currentRate = 0.9;
+        let selectedVoice = null;
+
+        function updateTime() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('timeText').textContent = `${h}:${m}`;
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        function initSpeechRecognition() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert('请使用 Chrome 或 Edge 浏览器');
+                return null;
+            }
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const rec = new SR();
+            rec.lang = 'zh-CN';
+            rec.continuous = false;
+            rec.interimResults = false;
+            rec.onresult = async (event) => {
+                const text = event.results[0][0].transcript;
+                addMessage(text, 'user');
+                await sendToAI(text);
+            };
+            rec.onerror = () => resetButton();
+            rec.onend = () => resetButton();
+            return rec;
+        }
+
+        function startListen() {
+            if (!recognition) recognition = initSpeechRecognition();
+            if (!recognition) return;
+            recognition.start();
+            isListening = true;
+            speakBtn.classList.add('listening');
+            btnText.textContent = '正在听…';
+        }
+
+        function stopListen() {
+            if (isListening && recognition) recognition.stop();
+            isListening = false;
+            speakBtn.classList.remove('listening');
+            btnText.textContent = '按住说话';
+        }
+
+        function resetButton() {
+            isListening = false;
+            speakBtn.classList.remove('listening');
+            btnText.textContent = '按住说话';
+        }
+
+        async function sendToAI(userText) {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: userText, user_id: 'elderly_001' })
+                });
+                const data = await res.json();
+                const reply = data.reply || '抱歉，我没听懂';
+                addMessage(reply, 'assistant');
+                speakText(reply);
+                if (data.risk_alert) showAlert();
+            } catch (e) {
+                const mock = getMockReply(userText);
+                addMessage(mock, 'assistant');
+                speakText(mock);
+            }
+        }
+
+        function speakText(text) {
+            if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = 'zh-CN';
+            u.rate = currentRate;
+            if (selectedVoice) u.voice = selectedVoice;
+            window.speechSynthesis.speak(u);
+        }
+
+        function addMessage(text, type) {
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            div.textContent = text;
+            chatContainer.appendChild(div);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function quickAsk(question) {
+            addMessage(question, 'user');
+            sendToAI(question);
+        }
+
+        function triggerEmergency() {
+            showAlert('您已触发紧急报警！<br>正在通知家人和紧急联系人…');
+        }
+
+        function showAlert(text) {
+            document.getElementById('alertText').innerHTML = text || '检测到异常呼救！<br>需要立即联系家人吗？';
+            document.getElementById('alertModal').classList.add('show');
+            speakText('检测到异常，请问您需要帮助吗？');
+        }
+
+        function dismissAlert() {
+            document.getElementById('alertModal').classList.remove('show');
+        }
+
+        function setFontSize(size) {
+            document.querySelectorAll('.message').forEach(el => el.style.fontSize = size + 'px');
+            document.querySelectorAll('.feature-title').forEach(el => el.style.fontSize = (size + 2) + 'px');
+            document.querySelectorAll('.feature-desc').forEach(el => el.style.fontSize = (size - 3) + 'px');
+            document.querySelectorAll('.stat-value').forEach(el => el.style.fontSize = (size + 4) + 'px');
+            document.querySelectorAll('.font-size-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function toggleSettings() {
+            const choice = prompt('1. 调语速\n2. 切换声音\n请输入数字：', '1');
+            if (choice === '1') {
+                const rate = prompt('语速（0.5-1.5，越小越慢）：', '0.9');
+                if (rate) { currentRate = parseFloat(rate); alert('语速已设置'); }
+            } else if (choice === '2') {
+                const voices = window.speechSynthesis.getVoices().filter(v => v.lang.includes('zh'));
+                if (voices.length === 0) { alert('没有中文语音'); return; }
+                let list = '选择声音：\n';
+                voices.forEach((v, i) => list += `${i+1}. ${v.name}\n`);
+                const c = prompt(list + '输入序号：', '1');
+                const idx = parseInt(c) - 1;
+                if (idx >= 0 && idx < voices.length) {
+                    selectedVoice = voices[idx];
+                    alert('已切换，听一下：');
+                    speakText('你好，这个声音好听吗？');
+                }
+            }
+        }
+
+        function playReport() {
+            speakText('今日播报。今天南宁晴天，22到30度，适合出门散步。今日用药2次，已完成1次。身体状况良好，请继续保持。');
+        }
+
+        // 功能区收起/展开
+        function toggleFeatures() {
+            const panel = document.getElementById('featurePanel');
+            const text = document.getElementById('featureToggleText');
+            panel.classList.toggle('collapsed');
+            if (panel.classList.contains('collapsed')) {
+                text.textContent = '▲ 展开功能区';
+            } else {
+                text.textContent = '▼ 收起功能区';
+            }
+        }
+
+        function getMockReply(text) {
+            if (text.includes('社保')) return '社保查询可以通过掌上12333APP，或拨打12333热线。';
+            if (text.includes('天气')) return '今天南宁晴天，22到30度，适合出门散步。';
+            if (text.includes('药')) return '好的，请问您想几点吃什么药？';
+            if (text.includes('咨询') || text.includes('不舒服')) return '请问您哪里不舒服？慢慢告诉我。';
+            if (text.includes('救命') || text.includes('有人吗')) return '您还好吗？需要帮您联系家人吗？';
+            if (text.includes('你好')) return '您好，我在呢！有什么可以帮您？';
+            return '好的，我明白了。还有什么需要帮忙的吗？';
+        }
+
+        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+    </script>
+</body>
+</html>
