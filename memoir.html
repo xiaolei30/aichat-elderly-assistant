@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>银龄回忆相册</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            background-color: #e8f5e9;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 480px;
+            height: 100vh;
+            height: 100dvh;
+            background-color: #f5f9f5;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 顶部 */
+        .top-bar {
+            background: linear-gradient(135deg, #d4edda, #c8e6c9);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .back-btn {
+            font-size: 20px;
+            color: #2c5f2d;
+            cursor: pointer;
+            margin-right: 12px;
+        }
+
+        .top-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2c5f2d;
+        }
+
+        /* 中间内容区 */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* 口述区 */
+        .record-area {
+            background-color: white;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .record-tip {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 12px;
+        }
+
+        .record-btn {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #4caf50, #2c5f2d);
+            color: white;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(44, 95, 45, 0.35);
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .record-btn.listening {
+            background: linear-gradient(145deg, #ef5350, #c62828);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 83, 80, 0.5); }
+            70% { box-shadow: 0 0 0 20px rgba(239, 83, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 83, 80, 0); }
+        }
+
+        .record-btn .icon {
+            font-size: 28px;
+        }
+
+        /* AI整理结果 */
+        .organized-box {
+            background-color: #fff8e1;
+            border-radius: 12px;
+            padding: 14px;
+            display: none;
+        }
+
+        .organized-box.show {
+            display: block;
+        }
+
+        .organized-label {
+            font-size: 14px;
+            color: #f57f17;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .organized-text {
+            font-size: 16px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .follow-up-question {
+            background-color: #e3f2fd;
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-top: 10px;
+            font-size: 15px;
+            color: #1565c0;
+            display: none;
+        }
+
+        .follow-up-question.show {
+            display: block;
+        }
+
+        /* 保存按钮 */
+        .save-btn {
+            background: linear-gradient(145deg, #4caf50, #2c5f2d);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 18px;
+            border-radius: 25px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+
+        /* 时间线 */
+        .timeline-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c5f2d;
+            margin-top: 8px;
+        }
+
+        .memory-item {
+            background-color: white;
+            border-radius: 10px;
+            padding: 14px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        }
+
+        .memory-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .memory-year {
+            background-color: #e8f5e9;
+            color: #2c5f2d;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .memory-category {
+            color: #999;
+            font-size: 13px;
+        }
+
+        .memory-content {
+            font-size: 16px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .memory-date {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 6px;
+        }
+
+        .empty-tip {
+            text-align: center;
+            color: #aaa;
+            padding: 30px;
+            font-size: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="top-bar">
+            <div class="back-btn" onclick="goBack()">←</div>
+            <div class="top-title">📖 银龄回忆相册</div>
+        </div>
+
+        <div class="content">
+            <!-- 口述区 -->
+            <div class="record-area">
+                <div class="record-tip">按住按钮，说说您的往事吧</div>
+                <button class="record-btn" id="recordBtn"
+                    onmousedown="startRecord()"
+                    onmouseup="stopRecord()"
+                    onmouseleave="stopRecord()"
+                    ontouchstart="event.preventDefault();startRecord()"
+                    ontouchend="event.preventDefault();stopRecord()">
+                    <span class="icon">🎤</span>
+                    <span id="recordBtnText">按住说话</span>
+                </button>
+            </div>
+
+            <!-- AI整理结果 -->
+            <div class="organized-box" id="organizedBox">
+                <div class="organized-label">✨ 小颐帮您整理好了：</div>
+                <div class="organized-text" id="organizedText"></div>
+                <div class="follow-up-question" id="followUpQuestion"></div>
+                <button class="save-btn" onclick="saveMemory()" style="margin-top:10px;">💾 保存这段回忆</button>
+            </div>
+
+            <!-- 时间线 -->
+            <div class="timeline-title">📚 我的回忆册</div>
+            <div id="timelineList"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000';
+
+        let recognition = null;
+        let isRecording = false;
+        let currentText = '';
+        let currentYear = '';
+
+        function initRecognition() {
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SR) {
+                alert('请用Chrome或Edge浏览器');
+                return null;
+            }
+            const rec = new SR();
+            rec.lang = 'zh-CN';
+            rec.continuous = false;
+            rec.interimResults = false;
+            rec.onresult = async (event) => {
+                currentText = event.results[0][0].transcript;
+                await processMemory(currentText);
+            };
+            rec.onerror = () => resetBtn();
+            rec.onend = () => resetBtn();
+            return rec;
+        }
+
+        function startRecord() {
+            if (!recognition) recognition = initRecognition();
+            if (!recognition) return;
+            recognition.start();
+            isRecording = true;
+            document.getElementById('recordBtn').classList.add('listening');
+            document.getElementById('recordBtnText').textContent = '正在听…';
+        }
+
+        function stopRecord() {
+            if (isRecording && recognition) recognition.stop();
+            isRecording = false;
+            resetBtn();
+        }
+
+        function resetBtn() {
+            document.getElementById('recordBtn').classList.remove('listening');
+            document.getElementById('recordBtnText').textContent = '按住说话';
+        }
+
+        async function processMemory(text) {
+            try {
+                // 1. AI整理
+                const res1 = await fetch(`${API_BASE_URL}/api/memoir/organize`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+                const data1 = await res1.json();
+
+                // 2. AI识别年代
+                const res2 = await fetch(`${API_BASE_URL}/api/memoir/guess-year`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+                const data2 = await res2.json();
+                currentYear = data2.year || '未知';
+
+                // 3. AI温和反问
+                const res3 = await fetch(`${API_BASE_URL}/api/memoir/follow-up`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+                const data3 = await res3.json();
+
+                // 显示结果
+                document.getElementById('organizedText').textContent = data1.organized;
+                document.getElementById('followUpQuestion').textContent = '💬 ' + data3.question;
+                document.getElementById('followUpQuestion').classList.add('show');
+                document.getElementById('organizedBox').classList.add('show');
+
+                // 语音朗读
+                speakText(data1.organized + '。' + data3.question);
+
+            } catch (e) {
+                alert('处理失败，请检查后端是否启动');
+            }
+        }
+
+        async function saveMemory() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/memoir/save`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: currentText,
+                        year: currentYear,
+                        category: '日常'
+                    })
+                });
+                const data = await res.json();
+                alert('✅ 已保存到回忆册！');
+                loadTimeline();
+                // 清空
+                document.getElementById('organizedBox').classList.remove('show');
+                currentText = '';
+            } catch (e) {
+                alert('保存失败');
+            }
+        }
+
+        async function loadTimeline() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/memoir/timeline`);
+                const data = await res.json();
+                const list = document.getElementById('timelineList');
+
+                if (!data.memoirs || data.memoirs.length === 0) {
+                    list.innerHTML = '<div class="empty-tip">还没有回忆，按住按钮说说吧</div>';
+                    return;
+                }
+
+                list.innerHTML = data.memoirs.map(m => `
+                        <div class="memory-item">
+                            <div class="memory-header">
+                                <span class="memory-year">${m.year || '未知年代'}</span>
+                                <span class="memory-category">${m.category || '日常'}</span>
+                            </div>
+                            <div class="memory-content">${m.content}</div>
+                            <div class="memory-date">${m.created_at || ''}</div>
+                            <button onclick="deleteMemory('${m.id}')" style="margin-top:8px;background:#ffebee;color:#c62828;border:none;padding:6px 14px;border-radius:12px;font-size:13px;cursor:pointer;">🗑 删除这条</button>
+                        </div>
+                    `).join('');
+            } catch (e) {
+                console.log('加载时间线失败');
+            }
+        }
+
+        function speakText(text) {
+            if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = 'zh-CN';
+            u.rate = 0.9;
+            window.speechSynthesis.speak(u);
+        }
+
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+        async function deleteMemory(id) {
+            if (!confirm('确定要删除这条回忆吗？')) return;
+            try {
+                await fetch(`${API_BASE_URL}/api/memoir/${id}`, {
+                    method: 'DELETE'
+                });
+                alert('已删除');
+                loadTimeline();
+            } catch (e) {
+                alert('删除失败');
+            }
+        }
+
+
+        // 页面加载时获取时间线
+        loadTimeline();
+    </script>
+</body>
+</html>
